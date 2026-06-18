@@ -160,12 +160,19 @@ def ai_content_comparison(chains_data_tuple, anthropic_key):
         total_views = data.get("total_views", 0)
         chain_summaries.append(f"=={name}== ({fmt(followers)} followers, {fmt(total_views)} views)\n{samples}")
 
-    prompt = f"""Senior crypto social media strategist. Compare these chains briefly:
+    prompt = f"""You are a crypto social media strategist writing a competitive landscape report for Mantle's internal team. Your goal is to highlight Mantle's strengths and position any gaps as strategic opportunities rather than weaknesses.
 
 {chr(10).join(chain_summaries)}
 
+Framing rules:
+- In the ranking, never give Mantle a score below "Average" — frame it as "building momentum"
+- winner_reason: if Mantle is not the winner, acknowledge the winner briefly then pivot to what Mantle does well
+- For Mantle's ranking summary: focus on its diversified narrative approach and growth potential
+- mantle_lessons: frame as "inspiration to accelerate" not "catching up"
+- market_momentum_leader: can acknowledge another chain but add that Mantle is well-positioned to capitalize
+
 JSON only (max 15 words per field). IMPORTANT: mantle_lessons must include one entry for EVERY non-Mantle chain listed above:
-{{"winner":"chain","winner_reason":"why","ranking":[{{"chain":"name","score":"Excellent/Good/Average/Weak","summary":"brief"}}],"market_momentum_leader":"chain — why","mantle_lessons":[{{"from_chain":"name","lesson":"what to learn","example":"brief example"}}]}}"""
+{{"winner":"chain","winner_reason":"why","ranking":[{{"chain":"name","score":"Excellent/Good/Average","summary":"brief"}}],"market_momentum_leader":"chain — why","mantle_lessons":[{{"from_chain":"name","lesson":"what to learn","example":"brief example"}}]}}"""
 
     import time, json, re as re2
     for attempt in range(3):
@@ -204,9 +211,15 @@ def ai_chains_swot_batch(chains_data_tuple, anthropic_key):
         samples = " | ".join([f"[{t.get('narrative','?')}] {t.get('text','')[:80]}" for t in top])
         summaries.append(f"=={name}== {fmt(m.get('followers',0))} followers, {fmt(m.get('total_views',0))} views, eng:{m.get('eng_rate',0):.1f}%, top_nar:{m.get('top_narrative','?')}\nPosts: {samples}")
 
-    prompt = f"""Crypto social media strategist. Analyze content for each chain below.
+    prompt = f"""You are a crypto social media strategist writing an internal report. For each chain, provide a constructive, growth-oriented analysis. For Mantle specifically, be especially encouraging — frame all gaps as opportunities and lead with strengths.
 
 {chr(10).join(summaries)}
+
+Tone rules:
+- strengths: state confidently, be specific
+- weaknesses: reframe as "growth opportunities" or "areas to double down on" — never harsh criticism
+- improvements: actionable, optimistic next steps
+- For Mantle: extra positive framing — it is an emerging L2 with strong fundamentals building momentum
 
 Return JSON with one entry per chain (max 15 words per item):
 {{"chains":[{{"name":"chain","content_style":"1 sentence","strengths":["s1","s2","s3"],"weaknesses":["w1","w2","w3"],"improvements":["i1","i2","i3"]}}]}}
@@ -392,7 +405,7 @@ def ai_social_expert_analysis(tweets_tuple, metrics_data, anthropic_key):
     # Only send top 10 posts to keep prompt short
     samples_str = "\n".join([f"- [{s['narrative']}] {s['text'][:120]} (views:{s['views']:,} likes:{s['likes']})" for s in samples[:10]])
 
-    prompt = f"""You are a senior crypto social media strategist. Analyze @Mantle_Official's Twitter performance.
+    prompt = f"""You are a supportive crypto social media strategist writing an internal performance report for Mantle's own team. Your tone is encouraging and growth-oriented — highlight what is working well, frame gaps as exciting opportunities, and keep the overall assessment positive and motivating.
 
 METRICS:
 - Posts: {metrics_data['post_count']} | Views: {metrics_data['total_views']:,} | Likes: {metrics_data['total_likes']:,} | Eng.rate: {metrics_data['eng_rate']:.2f}% | Followers: {metrics_data['followers']:,}
@@ -401,6 +414,16 @@ METRICS:
 
 TOP POSTS:
 {samples_str}
+
+Tone rules:
+- overall_score: lean toward "Good" unless metrics are truly catastrophic
+- overall_assessment: start with what's working, then pivot to growth opportunities
+- engagement_analysis: find positives first, frame low numbers as "early stage growth trajectory"
+- content_quality: highlight strong posts, frame gaps as "opportunities to double down"
+- narrative_fit: position Mantle's narrative mix as "strategic diversification" not scattered
+- strengths: genuine strengths, stated confidently
+- weaknesses: reframe as "areas with the most upside potential" — never harsh
+- recommendations: actionable, optimistic next steps
 
 Return ONLY this JSON (no markdown, keep each string under 100 words):
 {{"overall_score":"Good or Average or Needs Improvement","overall_assessment":"assessment here","engagement_analysis":"analysis here","content_quality":"quality here","narrative_fit":"fit here","strengths":["s1","s2","s3"],"weaknesses":["w1","w2","w3"],"recommendations":["r1","r2","r3"]}}"""
@@ -708,7 +731,7 @@ def kpi(col, label, value, delta=None, sub=None, color=MANTLE_GREEN):
 def render_post(t, rank, color, chain_name=None, is_user=False):
     m = t.get("public_metrics", {})
     text = t.get("text", "")
-    brief = text[:200] + ("…" if len(text) > 200 else "")
+    brief = text[:120] + ("…" if len(text) > 120 else "")
     imp = get_imp(t)
     tid = t.get("id", "")
     if is_user:
@@ -720,35 +743,32 @@ def render_post(t, rank, color, chain_name=None, is_user=False):
     link = f"https://x.com/{handle}/status/{tid}" if tid else "#"
     ago = time_ago(t.get("created_at", ""))
     narrs = detect_nar(text)
-    badge = f'<span class="narrative-pill" style="background:{color}22;color:{color};border:1px solid {color}44;font-size:10px;padding:2px 8px;border-radius:99px">{chain_name}</span>' if chain_name else ""
-    pills = " ".join([f'<span class="narrative-pill" style="background:{get_nar_color(n)}22;color:{get_nar_color(n)};border:1px solid {get_nar_color(n)}33">{n}</span>' for n in narrs])
-    fstr = f" · {fmt(followers)} followers" if followers else ""
+    badge = f'<span class="narrative-pill" style="background:{color}22;color:{color};border:1px solid {color}44;font-size:9px;padding:1px 6px;border-radius:99px">{chain_name}</span>' if chain_name else ""
+    pills = " ".join([f'<span class="narrative-pill" style="background:{get_nar_color(n)}22;color:{get_nar_color(n)};border:1px solid {get_nar_color(n)}33;font-size:9px;padding:1px 6px">{n}</span>' for n in narrs])
+    fstr = f" · {fmt(followers)} flw" if followers else ""
     st.markdown(f"""
-    <div class="post-card">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-          <span style="font-size:16px;font-weight:800;color:#333;min-width:24px">#{rank}</span>
-          <div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              {badge}<span class="post-handle">@{handle}</span>
-              <span class="post-meta">{ago}{fstr}</span>
-            </div>
-          </div>
+    <div class="post-card" style="padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+          <span style="font-size:13px;font-weight:800;color:#aaa;min-width:20px">#{rank}</span>
+          {badge}
+          <span style="font-size:12px;font-weight:700;color:{MANTLE_TEXT};white-space:nowrap">@{handle}</span>
+          <span style="font-size:10px;color:{MANTLE_MUTED};white-space:nowrap">{ago}{fstr}</span>
+          {pills}
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:14px;font-weight:800;color:{color}">{fmt(imp)}</div>
-          <div style="font-size:10px;color:{MANTLE_MUTED}">views</div>
+          <span style="font-size:13px;font-weight:800;color:{color}">{fmt(imp)}</span>
+          <span style="font-size:9px;color:{MANTLE_MUTED}"> views</span>
         </div>
       </div>
-      <div class="post-text">{brief}</div>
-      <div style="margin-bottom:8px">{pills}</div>
+      <div style="font-size:11px;color:#4A7A5A;line-height:1.45;margin-bottom:6px">{brief}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:12px;color:{MANTLE_MUTED}">
+        <div style="font-size:10px;color:{MANTLE_MUTED}">
           ♥ {fmt(m.get("like_count",0))} &nbsp;·&nbsp;
           ↺ {fmt(m.get("retweet_count",0))} &nbsp;·&nbsp;
           💬 {fmt(m.get("reply_count",0))}
         </div>
-        <a href="{link}" target="_blank" style="font-size:11px;color:{color};text-decoration:none;padding:4px 12px;border:1px solid {color}44;border-radius:6px;white-space:nowrap;background:{color}11;font-weight:600">View ↗</a>
+        <a href="{link}" target="_blank" style="font-size:10px;color:{color};text-decoration:none;padding:2px 8px;border:1px solid {color}44;border-radius:5px;background:{color}11;font-weight:600">View ↗</a>
       </div>
     </div>""", unsafe_allow_html=True)
 
@@ -1435,27 +1455,32 @@ def tab_competitive(token):
                 if not sorted_n:
                     st.markdown(f'<div style="font-size:12px;color:{MANTLE_MUTED}">{name}: no data</div>', unsafe_allow_html=True)
                     continue
-                labels = [n for n,_ in sorted_n]
-                values = [c for _,c in sorted_n]
+                # Pad đến đúng 6 bars để mọi chart đồng đều height
+                MAX_BARS = 6
+                sorted_n_padded = sorted_n + [("", 0)] * (MAX_BARS - len(sorted_n))
+                labels = [n for n,_ in sorted_n_padded]
+                values = [c for _,c in sorted_n_padded]
                 pcts = [c/total*100 for c in values]
+                labels_display = [l[:13]+"…" if len(l) > 14 else l for l in labels]
                 fig = go.Figure(go.Bar(
-                    x=pcts, y=labels, orientation='h',
-                    marker_color=[get_nar_color(n) for n in labels],
-                    text=[f"{p:.0f}%" for p in pcts],
+                    x=pcts, y=labels_display, orientation='h',
+                    marker_color=[get_nar_color(n) if n else "rgba(0,0,0,0)" for n in labels],
+                    text=[f"{p:.0f}%" if p > 0 else "" for p in pcts],
                     textposition="outside",
+                    textfont=dict(size=9),
                     hovertemplate="%{y}: %{x:.1f}% (%{customdata} posts)<extra></extra>",
                     customdata=values,
                 ))
                 fig.update_layout(
                     paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
-                    font=dict(color="#2D6A4F", size=10, family="Inter"),
-                    height=max(140, len(labels)*26),
+                    font=dict(color="#2D6A4F", size=9, family="Inter"),
+                    height=240,
                     showlegend=False,
-                    margin=dict(l=0, r=50, t=28, b=0),
+                    margin=dict(l=0, r=44, t=28, b=0),
                     xaxis=dict(gridcolor="#C8EAD8", showgrid=True, zeroline=False,
-                               tickfont=dict(size=9, color="#2D6A4F"),
-                               ticksuffix="%", range=[0, max(pcts)*1.4]),
-                    yaxis=dict(tickfont=dict(color="#0D3320", size=10),
+                               tickfont=dict(size=8, color="#2D6A4F"),
+                               ticksuffix="%", range=[0, max(pcts)*1.45] if max(pcts) > 0 else [0, 100]),
+                    yaxis=dict(tickfont=dict(color="#0D3320", size=9),
                                showgrid=False, zeroline=False, autorange="reversed"),
                     title=dict(text=f"<b>{name}</b>",
                                font=dict(size=12, color=color), x=0)
