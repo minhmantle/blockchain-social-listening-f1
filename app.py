@@ -747,7 +747,8 @@ def render_post(t, rank, color, chain_name=None, is_user=False):
     badge = f'<span style="{pill_style};background:{color}22;color:{color};border:1px solid {color}44">{chain_name}</span>' if chain_name else ""
     pills = " ".join([f'<span style="{pill_style};background:{get_nar_color(n)}22;color:{get_nar_color(n)};border:1px solid {get_nar_color(n)}33">{n}</span>' for n in narrs])
     fstr = f" · {fmt(followers)} flw" if followers else ""
-    html = f"""<div style="background:#FFFFFF;border:1px solid #C8EAD8;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-family:Inter,sans-serif;box-shadow:0 1px 3px rgba(0,165,114,0.06)">
+    st.markdown(f"""
+    <div style="background:#FFFFFF;border:1px solid #C8EAD8;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-family:Inter,sans-serif;box-shadow:0 1px 3px rgba(0,165,114,0.06)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;flex-wrap:wrap">
           <span style="font-size:13px;font-weight:800;color:#aaa;min-width:20px">#{rank}</span>
@@ -770,8 +771,7 @@ def render_post(t, rank, color, chain_name=None, is_user=False):
         </div>
         <a href="{link}" target="_blank" style="font-size:10px;color:{color};text-decoration:none;padding:2px 8px;border:1px solid {color}44;border-radius:5px;background:{color}11;font-weight:600">View ↗</a>
       </div>
-    </div>"""
-    components.html(html, height=130, scrolling=False)
+    </div>""", unsafe_allow_html=True)
 
 def tab_description(title, description, accounts, data_range):
     accounts_str = " &nbsp;·&nbsp; ".join([f"<b>@{a}</b>" for a in accounts])
