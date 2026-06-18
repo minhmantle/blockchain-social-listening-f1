@@ -731,7 +731,7 @@ def kpi(col, label, value, delta=None, sub=None, color=MANTLE_GREEN):
 def render_post(t, rank, color, chain_name=None, is_user=False):
     m = t.get("public_metrics", {})
     text = t.get("text", "")
-    brief = text[:120] + ("…" if len(text) > 120 else "")
+    brief = (text[:120] + ("…" if len(text) > 120 else "")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     imp = get_imp(t)
     tid = t.get("id", "")
     if is_user:
