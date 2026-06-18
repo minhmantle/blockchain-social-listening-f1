@@ -743,34 +743,35 @@ def render_post(t, rank, color, chain_name=None, is_user=False):
     link = f"https://x.com/{handle}/status/{tid}" if tid else "#"
     ago = time_ago(t.get("created_at", ""))
     narrs = detect_nar(text)
-    badge = f'<span class="narrative-pill" style="background:{color}22;color:{color};border:1px solid {color}44;font-size:9px;padding:1px 6px;border-radius:99px">{chain_name}</span>' if chain_name else ""
-    pills = " ".join([f'<span class="narrative-pill" style="background:{get_nar_color(n)}22;color:{get_nar_color(n)};border:1px solid {get_nar_color(n)}33;font-size:9px;padding:1px 6px">{n}</span>' for n in narrs])
+    pill_style = "display:inline-block;font-size:9px;padding:1px 6px;border-radius:99px;margin-right:3px;font-weight:600"
+    badge = f'<span style="{pill_style};background:{color}22;color:{color};border:1px solid {color}44">{chain_name}</span>' if chain_name else ""
+    pills = " ".join([f'<span style="{pill_style};background:{get_nar_color(n)}22;color:{get_nar_color(n)};border:1px solid {get_nar_color(n)}33">{n}</span>' for n in narrs])
     fstr = f" · {fmt(followers)} flw" if followers else ""
-    st.markdown(f"""
-    <div class="post-card" style="padding:10px 12px;margin-bottom:6px">
+    html = f"""<div style="background:#FFFFFF;border:1px solid #C8EAD8;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-family:Inter,sans-serif;box-shadow:0 1px 3px rgba(0,165,114,0.06)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;flex-wrap:wrap">
           <span style="font-size:13px;font-weight:800;color:#aaa;min-width:20px">#{rank}</span>
           {badge}
-          <span style="font-size:12px;font-weight:700;color:{MANTLE_TEXT};white-space:nowrap">@{handle}</span>
-          <span style="font-size:10px;color:{MANTLE_MUTED};white-space:nowrap">{ago}{fstr}</span>
+          <span style="font-size:12px;font-weight:700;color:#0D3320;white-space:nowrap">@{handle}</span>
+          <span style="font-size:10px;color:#4A7A5A;white-space:nowrap">{ago}{fstr}</span>
           {pills}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <span style="font-size:13px;font-weight:800;color:{color}">{fmt(imp)}</span>
-          <span style="font-size:9px;color:{MANTLE_MUTED}"> views</span>
+          <span style="font-size:9px;color:#4A7A5A"> views</span>
         </div>
       </div>
       <div style="font-size:11px;color:#4A7A5A;line-height:1.45;margin-bottom:6px">{brief}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:10px;color:{MANTLE_MUTED}">
+        <div style="font-size:10px;color:#4A7A5A">
           ♥ {fmt(m.get("like_count",0))} &nbsp;·&nbsp;
           ↺ {fmt(m.get("retweet_count",0))} &nbsp;·&nbsp;
           💬 {fmt(m.get("reply_count",0))}
         </div>
         <a href="{link}" target="_blank" style="font-size:10px;color:{color};text-decoration:none;padding:2px 8px;border:1px solid {color}44;border-radius:5px;background:{color}11;font-weight:600">View ↗</a>
       </div>
-    </div>""", unsafe_allow_html=True)
+    </div>"""
+    components.html(html, height=130, scrolling=False)
 
 def tab_description(title, description, accounts, data_range):
     accounts_str = " &nbsp;·&nbsp; ".join([f"<b>@{a}</b>" for a in accounts])
