@@ -2048,10 +2048,12 @@ def tab_intel(token):
         cat_total = sum(v for _,v in cat_sorted) or 1
         with col:
             st.markdown(f'<div style="font-size:12px;font-weight:800;color:{cat_color};margin-bottom:4px;text-transform:uppercase">{cat_name}</div>', unsafe_allow_html=True)
-            # Show account list
+            # Show account list — truncate to max 1 line
             accs = INTEL_ACCOUNTS.get(cat_name, [])
-            accs_str = " · ".join([f"@{a}" for a in accs])
-            st.markdown(f'<div style="font-size:10px;color:#4A7A5A;margin-bottom:8px;line-height:1.5">{accs_str}</div>', unsafe_allow_html=True)
+            accs_str = " · ".join([f"@{a}" for a in accs[:5]])
+            if len(accs) > 5:
+                accs_str += f" · +{len(accs)-5} more"
+            st.markdown(f'<div style="font-size:10px;color:#4A7A5A;margin-bottom:8px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{accs_str}</div>', unsafe_allow_html=True)
             if cat_sorted:
                 fp = go.Figure(go.Pie(
                     labels=[n for n,_ in cat_sorted],
@@ -2061,12 +2063,12 @@ def tab_intel(token):
                     textfont_size=10, textfont_color="#0D3320", hole=0.5,
                     hovertemplate="%{label}: %{value} posts (%{percent})<extra></extra>"))
                 pl = {k:v for k,v in BASE_LAYOUT.items() if k not in ("margin","legend")}
-                fp.update_layout(**pl, height=200, showlegend=False,
-                                 margin=dict(l=0,r=0,t=10,b=0))
+                fp.update_layout(**pl, height=220, showlegend=False,
+                                 margin=dict(l=10,r=10,t=10,b=10))
                 st.plotly_chart(fp, use_container_width=True)
                 top = cat_sorted[0]
                 tc = get_nar_color(top[0])
-                st.markdown(f'<div style="text-align:center;font-size:11px;color:{tc};font-weight:700">#1 {top[0]} · {top[1]/cat_total*100:.0f}%</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align:center;font-size:11px;color:{tc};font-weight:700;margin-top:-8px">#1 {top[0]} · {top[1]/cat_total*100:.0f}%</div>', unsafe_allow_html=True)
             else:
                 st.markdown(f'<div style="font-size:12px;color:#4A7A5A">No data</div>', unsafe_allow_html=True)
 
