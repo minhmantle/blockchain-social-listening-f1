@@ -1954,12 +1954,14 @@ def render_intel_analysis(analysis, all_tweets):
     # Top posts by impact score
     st.markdown('<div class="section-title">🏆 Top Posts by Impact Score</div>', unsafe_allow_html=True)
     top_posts = sorted(all_tweets, key=impact_score, reverse=True)[:9]
-    cols = st.columns(3)
-    for i, (col, t) in enumerate(zip(cols * 3, top_posts), 1):
-        cat = t.get("author_category","")
-        cat_color = {"Institutional":"#06b6d4","Research & Media":"#8b5cf6","Chains":MANTLE_GREEN}.get(cat,"#6b7280")
-        with col:
-            render_post(t, i, cat_color, is_user=True)
+    for row_start in range(0, len(top_posts), 3):
+        row = top_posts[row_start:row_start+3]
+        cols = st.columns(3)
+        for col, (idx, t) in zip(cols, enumerate(row, row_start+1)):
+            cat = t.get("author_category","")
+            cat_color = {"Institutional":"#06b6d4","Research & Media":"#8b5cf6","Chains":MANTLE_GREEN}.get(cat,"#6b7280")
+            with col:
+                render_post(t, idx, cat_color, is_user=True)
 
 def tab_intel(token):
     tab_description(
