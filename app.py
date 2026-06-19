@@ -1380,43 +1380,6 @@ def tab_competitive(token):
             render_alerts(alerts, name, d["color"])
 
     # KPI snapshot
-    st.markdown('<div class="section-title">Performance Snapshot</div>', unsafe_allow_html=True)
-    cols = st.columns(len(active_chains))
-    for col, (name, d) in zip(cols, all_data.items()):
-        color = d["color"]
-        followers = d["user"].get("public_metrics",{}).get("followers_count",0) or 0
-        total_v = sum(get_imp(t) for t in d["tweets"])
-        prev_v = sum(get_imp(t) for t in d["prev"])
-        delta = ((total_v - prev_v) / prev_v * 100) if prev_v else 0
-        arrow = "▲" if delta >= 0 else "▼"
-        dcls = f"color:{MANTLE_GREEN}" if delta >= 0 else "color:#f87171"
-        col.markdown(f"""
-        <div class="kpi-card">
-          <div style="font-size:12px;font-weight:800;color:{color};text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">{name}</div>
-          <div style="font-size:11px;color:#4A7A5A;font-weight:500;margin-bottom:2px">Followers</div>
-          <div style="font-size:20px;font-weight:800;color:#0D3320;margin-bottom:10px">{fmt(followers)}</div>
-          <div style="font-size:11px;color:#4A7A5A;font-weight:500;margin-bottom:2px">Total views</div>
-          <div style="font-size:20px;font-weight:800;color:{color}">{fmt(total_v)}</div>
-          <div style="font-size:12px;{dcls};margin-top:4px;font-weight:600">{arrow} {abs(delta):.1f}% vs prev</div>
-          <div style="font-size:11px;color:#4A7A5A;font-weight:500;margin-top:8px">{len(d['tweets'])} posts</div>
-        </div>""", unsafe_allow_html=True)
-
-    st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
-
-    # Views line chart — RIGHT AFTER KPI
-    fig = go.Figure()
-    for name, d in all_data.items():
-        df = group_by(d["tweets"], period)
-        if not df.empty:
-            fig.add_trace(go.Scatter(x=df["period"], y=df["impressions"], name=name,
-                                     mode="lines+markers",
-                                     line=dict(color=d["color"], width=2), marker=dict(size=5),
-                                     hovertemplate=f"{name}: " + "%{y:,}<extra></extra>"))
-    fig.update_layout(**BASE_LAYOUT, height=280, xaxis=AXIS, yaxis=AXIS,
-                      title=dict(text=f"Views by {period} — all chains",
-                                 font=dict(size=13, color="#0D3320"), x=0))
-    st.plotly_chart(fig, use_container_width=True)
-
     # Narrative Breakdown by Chain — 3 per row
     st.markdown('<div class="section-title">Narrative Breakdown by Chain</div>', unsafe_allow_html=True)
     chain_list = list(all_data.items())
